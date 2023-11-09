@@ -68,7 +68,11 @@ class DefaultFileHandler(RotatingFileHandler):
     def format(self, record):
         created = int(record.created)
         message = message_from_record(record)
-        return json.dumps({record.levelname: {created: message}}, sort_keys=True)
+        data = {}
+        data["log_level"] = record.levelname
+        data["time"] = created
+        data["data"] = message
+        return json.dumps(data, sort_keys=True)
 
     def rotation_filename(self, default_name):
         return '{}-{}.gz'.format(default_name, time.strftime('%Y%m%d'))
@@ -111,8 +115,11 @@ class ConsoleHandler(StreamHandler):
             return str(record.msg)
         elif isinstance(record.msg, dict):
             created = int(record.created)
-            message = {record.levelname: {created: record.msg}}
-            return json.dumps(message, sort_keys=True, indent=2)
+            data = {}
+            data["log_level"] = record.levelname
+            data["time"] = created
+            data["data"] = record.msg
+            return json.dumps(data, sort_keys=True)
         else:
             return super(ConsoleHandler, self).format(record)
 
@@ -127,8 +134,11 @@ class SQLFileHandler(RotatingFileHandler):
 
     def format(self, record):
         created = int(record.created)
-        message = {record.levelname: {created: record.msg.to_dict}}
-        return json.dumps(message, sort_keys=True)
+        data = {}
+        data["log_level"] = record.levelname
+        data["time"] = created
+        data["data"] = record.msg.to_dict
+        return json.dumps(data, sort_keys=True)
 
     def rotation_filename(self, default_name):
         return '{}-{}.gz'.format(default_name, time.strftime('%Y%m%d'))
