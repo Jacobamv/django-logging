@@ -25,7 +25,8 @@ def message_from_record(record):
     else:
         try:
             message = record.msg.to_dict
-        except AttributeError:
+        except AttributeError as e:
+            print(e)
             url = "https://github.com/cipriantarta/django-logging/issues"
             return dict(raw="Unable to parse LogObject. Please file in a bug at: %s" % url)
     return message
@@ -112,14 +113,19 @@ class ConsoleHandler(StreamHandler):
                 message = pprint.pformat(message, indent, 160, compact=True)
             return message
         elif isinstance(record.msg, ErrorLogObject):
-            return str(record.msg)
+            created = int(record.created)
+            data = {}
+            data["log_level"] = record.levelname
+            data["time"] = created
+            data["data"] = str(record.msg)
+            return json.dumps(data, sort_keys=True, indent=2)
         elif isinstance(record.msg, dict):
             created = int(record.created)
             data = {}
             data["log_level"] = record.levelname
             data["time"] = created
             data["data"] = record.msg
-            return json.dumps(data, sort_keys=True)
+            return json.dumps(data, sort_keys=True, indent=2)
         else:
             return super(ConsoleHandler, self).format(record)
 
